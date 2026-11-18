@@ -383,5 +383,84 @@
   gsap.from('.formcard', { y: 70, autoAlpha: 0, duration: 1.2, ease: 'expo.out', scrollTrigger: { trigger: '.formcard', start: 'top 92%' } });
   gsap.fromTo('.foot__word-in', { '--fx': '100%' }, { '--fx': '0%', ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: true } });
 
+  /* =========================================================
+     Extra motion: parallax photos, tilt, cursor, draw-ins
+     ========================================================= */
+  // Kicker lines draw in
+  $$('.kicker:not(.hero__kicker) .kicker__line').forEach(function (l) {
+    gsap.fromTo(l, { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left center', duration: 1, ease: 'expo.out', scrollTrigger: { trigger: l, start: 'top 92%' } });
+  });
+
+  // Service card photos drift as you scroll
+  $$('.card__img img').forEach(function (img) {
+    gsap.fromTo(img, { yPercent: -6, scale: 1.14 }, { yPercent: 6, scale: 1.14, ease: 'none', scrollTrigger: { trigger: img.parentNode, start: 'top bottom', end: 'bottom top', scrub: true } });
+  });
+
+  // Gallery: zoom-out on reveal + depth parallax
+  $$('.gal__item img').forEach(function (img, i) {
+    var depth = [10, 6, 12, 7, 5, 9][i % 6];
+    gsap.fromTo(img, { yPercent: -depth, scale: 1.3 }, { yPercent: depth, scale: 1.12, ease: 'none', scrollTrigger: { trigger: img.parentNode, start: 'top bottom', end: 'bottom top', scrub: 0.6 } });
+  });
+  gsap.fromTo('.gal__item:nth-child(odd)', { y: 60 }, { y: -30, ease: 'none', scrollTrigger: { trigger: '.gal', start: 'top bottom', end: 'bottom top', scrub: 1 } });
+
+  // Benefits photo slowly pushes in while the film darkens
+  gsap.fromTo('.benefits__frame img', { scale: 1.22 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: '.benefits', start: 'top bottom', end: 'bottom 60%', scrub: true } });
+  gsap.from('.perk__ico', { scale: 0, rotate: -90, stagger: 0.08, duration: 0.9, ease: 'back.out(2.2)', scrollTrigger: { trigger: '.perks', start: 'top 85%' } });
+
+  // Lab: a glare sweeps across the glass once it's revealed
+  var lab = $('.lab__stage');
+  if (lab) {
+    var glare = document.createElement('span');
+    glare.className = 'fx-glare'; glare.setAttribute('aria-hidden', 'true');
+    lab.appendChild(glare);
+    gsap.fromTo(glare, { xPercent: -120 }, { xPercent: 220, duration: 1.8, delay: 0.6, ease: 'power2.inOut', scrollTrigger: { trigger: lab, start: 'top 75%' } });
+  }
+
+  // Step numbers count up and a progress rail fills
+  $$('.step__n').forEach(function (n) {
+    var end = parseInt(n.textContent, 10), o = { v: 0 };
+    gsap.to(o, { v: end, duration: 1.2, ease: 'power2.out', scrollTrigger: { trigger: n, start: 'top 88%' }, onUpdate: function () { n.textContent = ('0' + Math.round(o.v)).slice(-2); } });
+  });
+  var steps = $('.steps');
+  if (steps) {
+    var rail = document.createElement('span');
+    rail.className = 'steps__rail'; rail.setAttribute('aria-hidden', 'true');
+    steps.appendChild(rail);
+    gsap.fromTo(rail, { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: steps, start: 'top 75%', end: 'bottom 55%', scrub: true } });
+  }
+
+  // Contact background: slow Ken Burns as you scroll by
+  gsap.fromTo('.contact__bg img', { scale: 1.25, yPercent: -6 }, { scale: 1.05, yPercent: 6, ease: 'none', scrollTrigger: { trigger: '.contact', start: 'top bottom', end: 'bottom top', scrub: true } });
+
+  // Pointer-only: 3D tilt on cards & gallery, plus a soft cursor ring
+  if (finePointer) {
+    $$('.card, .gal__item').forEach(function (el) {
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+        el.style.setProperty('--ry', (px * 8).toFixed(2) + 'deg');
+        el.style.setProperty('--rx', (py * -8).toFixed(2) + 'deg');
+        el.style.setProperty('--gx', ((px + 0.5) * 100).toFixed(1) + '%');
+        el.style.setProperty('--gy', ((py + 0.5) * 100).toFixed(1) + '%');
+      });
+      el.addEventListener('pointerleave', function () { el.style.setProperty('--rx', '0deg'); el.style.setProperty('--ry', '0deg'); });
+    });
+
+    var ring = document.createElement('div');
+    ring.className = 'cursor'; ring.setAttribute('aria-hidden', 'true');
+    ring.innerHTML = '<span>View</span>';
+    document.body.appendChild(ring);
+    var cx = gsap.quickTo(ring, 'x', { duration: 0.45, ease: 'power3' }), cy = gsap.quickTo(ring, 'y', { duration: 0.45, ease: 'power3' });
+    window.addEventListener('pointermove', function (e) { cx(e.clientX); cy(e.clientY); ring.classList.add('is-on'); }, { passive: true });
+    document.addEventListener('pointerleave', function () { ring.classList.remove('is-on'); });
+    $$('a, button, .lab__handle, input, select, textarea').forEach(function (el) {
+      el.addEventListener('pointerenter', function () { ring.classList.add('is-link'); });
+      el.addEventListener('pointerleave', function () { ring.classList.remove('is-link'); });
+    });
+    $$('.gal__item').forEach(function (el) {
+      el.addEventListener('pointerenter', function () { ring.classList.add('is-view'); });
+      el.addEventListener('pointerleave', function () { ring.classList.remove('is-view'); });
+    });
+  }
+
   window.addEventListener('load', function () { ScrollTrigger.refresh(); });
 })();
